@@ -14,7 +14,7 @@ interface OrderFormProps {
   onClose: () => void;
 }
 
-const statusOptions: OrderStatus[] = ['', 'HECHO', 'EN_CURSO', 'ESPERANDO', 'PENDIENTE'];
+const statusOptions: OrderStatus[] = ['SIN_ESTADO', 'HECHO', 'EN_CURSO', 'ESPERANDO', 'PENDIENTE'];
 
 export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
   const [formData, setFormData] = useState<OrderFormData>({
@@ -24,14 +24,14 @@ export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
     persona: '',
     cantidad: 0,
     producto: '',
-    prueba: '',
-    laser: '',
-    trivor: '',
-    manipulado: '',
-    laminado: '',
-    encuadernacion: '',
-    carteleria: '',
-    subcontrataciones: '',
+    prueba: 'SIN_ESTADO',
+    laser: 'SIN_ESTADO',
+    trivor: 'SIN_ESTADO',
+    manipulado: 'SIN_ESTADO',
+    laminado: 'SIN_ESTADO',
+    encuadernacion: 'SIN_ESTADO',
+    carteleria: 'SIN_ESTADO',
+    subcontrataciones: 'SIN_ESTADO',
     entrega: '',
   });
 
@@ -45,14 +45,14 @@ export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
       persona: '',
       cantidad: 0,
       producto: '',
-      prueba: '',
-      laser: '',
-      trivor: '',
-      manipulado: '',
-      laminado: '',
-      encuadernacion: '',
-      carteleria: '',
-      subcontrataciones: '',
+      prueba: 'SIN_ESTADO',
+      laser: 'SIN_ESTADO',
+      trivor: 'SIN_ESTADO',
+      manipulado: 'SIN_ESTADO',
+      laminado: 'SIN_ESTADO',
+      encuadernacion: 'SIN_ESTADO',
+      carteleria: 'SIN_ESTADO',
+      subcontrataciones: 'SIN_ESTADO',
       entrega: '',
     });
     onClose();
@@ -152,13 +152,13 @@ export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
                       </SelectTrigger>
                       <SelectContent>
                         {statusOptions.map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {status === '' ? 'Sin estado' : 
-                             status === 'HECHO' ? 'Hecho' :
-                             status === 'EN_CURSO' ? 'En Curso' :
-                             status === 'ESPERANDO' ? 'Esperando' :
-                             status === 'PENDIENTE' ? 'Pendiente' : status}
-                          </SelectItem>
+                           <SelectItem key={status} value={status}>
+                             {status === 'SIN_ESTADO' ? 'Sin estado' : 
+                              status === 'HECHO' ? 'Hecho' :
+                              status === 'EN_CURSO' ? 'En Curso' :
+                              status === 'ESPERANDO' ? 'Esperando' :
+                              status === 'PENDIENTE' ? 'Pendiente' : status}
+                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

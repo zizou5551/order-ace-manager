@@ -6,7 +6,7 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  if (!status) return null;
+  if (!status || status === 'SIN_ESTADO') return null;
 
   const getVariant = (status: OrderStatus) => {
     switch (status) {
@@ -33,6 +33,8 @@ export function StatusBadge({ status }: StatusBadgeProps) {
         return 'Esperando';
       case 'PENDIENTE':
         return 'Pendiente';
+      case 'SIN_ESTADO':
+        return 'Sin estado';
       default:
         return status;
     }

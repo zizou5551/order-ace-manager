@@ -19,7 +19,7 @@ export interface Order {
   createdAt: string;
 }
 
-export type OrderStatus = 'HECHO' | 'EN_CURSO' | 'ESPERANDO' | 'PENDIENTE' | '';
+export type OrderStatus = 'HECHO' | 'EN_CURSO' | 'ESPERANDO' | 'PENDIENTE' | 'SIN_ESTADO';
 
 export interface OrderFormData {
   titulo: string;

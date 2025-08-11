@@ -21,14 +21,14 @@ const Index = () => {
       persona: 'Helena Forteza García',
       cantidad: 2,
       producto: 'ESPIRALES',
-      prueba: '',
+      prueba: 'SIN_ESTADO',
       laser: 'HECHO',
-      trivor: '',
-      manipulado: '',
-      laminado: '',
+      trivor: 'SIN_ESTADO',
+      manipulado: 'SIN_ESTADO',
+      laminado: 'SIN_ESTADO',
       encuadernacion: 'EN_CURSO',
-      carteleria: '',
-      subcontrataciones: '',
+      carteleria: 'SIN_ESTADO',
+      subcontrataciones: 'SIN_ESTADO',
       entrega: 'AGENCIA DE TRANSPORTES - GLS',
       terminado: false,
       createdAt: new Date().toISOString(),
@@ -66,7 +66,7 @@ const Index = () => {
     const completed = orders.filter(o => o.terminado).length;
     const inProgress = orders.filter(o => !o.terminado).length;
     const pending = orders.filter(o => {
-      const hasAnyStatus = [o.prueba, o.laser, o.trivor, o.manipulado, o.laminado, o.encuadernacion, o.carteleria, o.subcontrataciones].some(status => status !== '');
+      const hasAnyStatus = [o.prueba, o.laser, o.trivor, o.manipulado, o.laminado, o.encuadernacion, o.carteleria, o.subcontrataciones].some(status => status !== 'SIN_ESTADO');
       return !hasAnyStatus;
     }).length;
 
