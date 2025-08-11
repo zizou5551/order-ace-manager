@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { OrderFormData, OrderStatus } from "@/types/order";
+import { OrderFormData, ProductType, ProofStatus, ProcessStatus, DeliveryType } from "@/types/order";
 import { Plus, X } from "lucide-react";
 
 interface OrderFormProps {
@@ -14,7 +14,13 @@ interface OrderFormProps {
   onClose: () => void;
 }
 
-const statusOptions: OrderStatus[] = ['SIN_ESTADO', 'HECHO', 'EN_CURSO', 'ESPERANDO', 'PENDIENTE'];
+const productOptions: ProductType[] = ['SIN_SELECCION', 'LIBROS', 'REVISTAS', 'DIPTICOS / TRIPTICOS', 'TARJETAS / TARJETONES / FLYERS', 'WIRE-O', 'CARPETAS ANILLAS', 'CARTELES', 'OTROS'];
+
+const proofOptions: ProofStatus[] = ['SIN_ESTADO', 'ESPERANDO', 'OK CLIENTE', 'ENVIADA PRUEBA', 'PARADO', 'FERRO DIGITAL'];
+
+const processOptions: ProcessStatus[] = ['SIN_ESTADO', 'ESPERANDO', 'EN_CURSO'];
+
+const deliveryOptions: DeliveryType[] = ['SIN_SELECCION', 'RECOGE EN FRAGMA', '2814', 'AVISAR', 'ENTREGA IMEDISA', 'ENTREGA JUANILLO', 'JUANILLO', 'STOCK FRAGMA'];
 
 export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
   const [formData, setFormData] = useState<OrderFormData>({
@@ -23,7 +29,7 @@ export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
     fechaEntrega: '',
     persona: '',
     cantidad: 0,
-    producto: '',
+    producto: 'SIN_SELECCION',
     prueba: 'SIN_ESTADO',
     laser: 'SIN_ESTADO',
     trivor: 'SIN_ESTADO',
@@ -32,7 +38,7 @@ export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
     encuadernacion: 'SIN_ESTADO',
     carteleria: 'SIN_ESTADO',
     subcontrataciones: 'SIN_ESTADO',
-    entrega: '',
+    entrega: 'SIN_SELECCION',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -44,7 +50,7 @@ export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
       fechaEntrega: '',
       persona: '',
       cantidad: 0,
-      producto: '',
+      producto: 'SIN_SELECCION',
       prueba: 'SIN_ESTADO',
       laser: 'SIN_ESTADO',
       trivor: 'SIN_ESTADO',
@@ -53,7 +59,7 @@ export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
       encuadernacion: 'SIN_ESTADO',
       carteleria: 'SIN_ESTADO',
       subcontrataciones: 'SIN_ESTADO',
-      entrega: '',
+      entrega: 'SIN_SELECCION',
     });
     onClose();
   };
@@ -126,39 +132,70 @@ export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
               
               <div className="space-y-2">
                 <Label htmlFor="producto">Producto</Label>
-                <Input
-                  id="producto"
+                <Select
                   value={formData.producto}
-                  onChange={(e) => setFormData({...formData, producto: e.target.value})}
-                />
+                  onValueChange={(value) => setFormData({...formData, producto: value as ProductType})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar producto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {productOptions.map((product) => (
+                      <SelectItem key={product} value={product}>
+                        {product === 'SIN_SELECCION' ? 'Sin selección' : product}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Estados de Servicios</h3>
+              
+              {/* Prueba section */}
+              <div className="space-y-2">
+                <Label className="capitalize">Prueba</Label>
+                <Select
+                  value={formData.prueba}
+                  onValueChange={(value) => setFormData({...formData, prueba: value as ProofStatus})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {proofOptions.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status === 'SIN_ESTADO' ? 'Sin estado' : 
+                         status === 'OK CLIENTE' ? 'OK Cliente' :
+                         status === 'ENVIADA PRUEBA' ? 'Enviada Prueba' :
+                         status === 'FERRO DIGITAL' ? 'Ferro Digital' : status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {[
-                  'prueba', 'laser', 'trivor', 'manipulado',
-                  'laminado', 'encuadernacion', 'carteleria', 'subcontrataciones'
+                  'laser', 'trivor', 'manipulado', 'laminado',
+                  'encuadernacion', 'carteleria', 'subcontrataciones'
                 ].map((field) => (
                   <div key={field} className="space-y-2">
                     <Label className="capitalize">{field}</Label>
                     <Select
                       value={formData[field as keyof OrderFormData] as string}
-                      onValueChange={(value) => setFormData({...formData, [field]: value as OrderStatus})}
+                      onValueChange={(value) => setFormData({...formData, [field]: value as ProcessStatus})}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar" />
                       </SelectTrigger>
                       <SelectContent>
-                        {statusOptions.map((status) => (
-                           <SelectItem key={status} value={status}>
-                             {status === 'SIN_ESTADO' ? 'Sin estado' : 
-                              status === 'HECHO' ? 'Hecho' :
-                              status === 'EN_CURSO' ? 'En Curso' :
-                              status === 'ESPERANDO' ? 'Esperando' :
-                              status === 'PENDIENTE' ? 'Pendiente' : status}
-                           </SelectItem>
+                        {processOptions.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {status === 'SIN_ESTADO' ? 'Sin estado' : 
+                             status === 'EN_CURSO' ? 'En Curso' : status}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -169,12 +206,21 @@ export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="entrega">Entrega</Label>
-              <Input
-                id="entrega"
+              <Select
                 value={formData.entrega}
-                onChange={(e) => setFormData({...formData, entrega: e.target.value})}
-                placeholder="Ej: AGENCIA DE TRANSPORTES - GLS"
-              />
+                onValueChange={(value) => setFormData({...formData, entrega: value as DeliveryType})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar entrega" />
+                </SelectTrigger>
+                <SelectContent>
+                  {deliveryOptions.map((delivery) => (
+                    <SelectItem key={delivery} value={delivery}>
+                      {delivery === 'SIN_SELECCION' ? 'Sin selección' : delivery}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex justify-end gap-2">
