@@ -4,15 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "./StatusBadge";
+import { EditableCell } from "./EditableCell";
 import { Order } from "@/types/order";
 import { Search, Eye, Trash2 } from "lucide-react";
 
 interface OrderTableProps {
   orders: Order[];
   onDeleteOrder: (id: string) => void;
+  onUpdateOrder: (id: string, updates: Partial<Order>) => void;
 }
 
-export function OrderTable({ orders, onDeleteOrder }: OrderTableProps) {
+export function OrderTable({ orders, onDeleteOrder, onUpdateOrder }: OrderTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
@@ -25,6 +27,10 @@ export function OrderTable({ orders, onDeleteOrder }: OrderTableProps) {
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('es-ES');
+  };
+
+  const handleUpdateField = (orderId: string, field: keyof Order, value: any) => {
+    onUpdateOrder(orderId, { [field]: value });
   };
 
   return (
@@ -75,7 +81,11 @@ export function OrderTable({ orders, onDeleteOrder }: OrderTableProps) {
                   <TableRow key={order.id} className="hover:bg-muted/25">
                     <TableCell className="font-medium">
                       <div className="space-y-1">
-                        <div className="font-semibold text-sm">{order.titulo}</div>
+                        <EditableCell
+                          value={order.titulo}
+                          onSave={(value) => handleUpdateField(order.id, 'titulo', value)}
+                          className="font-semibold text-sm"
+                        />
                         {order.fechaEntrega && (
                           <div className="text-xs text-muted-foreground">
                             Entrega: {formatDate(order.fechaEntrega)}
@@ -83,19 +93,88 @@ export function OrderTable({ orders, onDeleteOrder }: OrderTableProps) {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>{order.persona}</TableCell>
-                    <TableCell>{order.cantidad > 0 ? order.cantidad : '-'}</TableCell>
-                    <TableCell>{order.producto || '-'}</TableCell>
-                    <TableCell><StatusBadge status={order.prueba} /></TableCell>
-                    <TableCell><StatusBadge status={order.laser} /></TableCell>
-                    <TableCell><StatusBadge status={order.trivor} /></TableCell>
-                    <TableCell><StatusBadge status={order.manipulado} /></TableCell>
-                    <TableCell><StatusBadge status={order.laminado} /></TableCell>
-                    <TableCell><StatusBadge status={order.encuadernacion} /></TableCell>
-                    <TableCell><StatusBadge status={order.carteleria} /></TableCell>
-                    <TableCell><StatusBadge status={order.subcontrataciones} /></TableCell>
+                    <TableCell>
+                      <EditableCell
+                        value={order.persona}
+                        onSave={(value) => handleUpdateField(order.id, 'persona', value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <EditableCell
+                        value={order.cantidad}
+                        onSave={(value) => handleUpdateField(order.id, 'cantidad', value)}
+                        type="number"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <EditableCell
+                        value={order.producto}
+                        onSave={(value) => handleUpdateField(order.id, 'producto', value)}
+                        type="product"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <EditableCell
+                        value={order.prueba}
+                        onSave={(value) => handleUpdateField(order.id, 'prueba', value)}
+                        type="proof"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <EditableCell
+                        value={order.laser}
+                        onSave={(value) => handleUpdateField(order.id, 'laser', value)}
+                        type="process"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <EditableCell
+                        value={order.trivor}
+                        onSave={(value) => handleUpdateField(order.id, 'trivor', value)}
+                        type="process"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <EditableCell
+                        value={order.manipulado}
+                        onSave={(value) => handleUpdateField(order.id, 'manipulado', value)}
+                        type="process"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <EditableCell
+                        value={order.laminado}
+                        onSave={(value) => handleUpdateField(order.id, 'laminado', value)}
+                        type="process"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <EditableCell
+                        value={order.encuadernacion}
+                        onSave={(value) => handleUpdateField(order.id, 'encuadernacion', value)}
+                        type="process"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <EditableCell
+                        value={order.carteleria}
+                        onSave={(value) => handleUpdateField(order.id, 'carteleria', value)}
+                        type="process"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <EditableCell
+                        value={order.subcontrataciones}
+                        onSave={(value) => handleUpdateField(order.id, 'subcontrataciones', value)}
+                        type="process"
+                      />
+                    </TableCell>
                     <TableCell className="max-w-[150px]">
-                      <div className="truncate text-sm">{order.entrega || '-'}</div>
+                      <EditableCell
+                        value={order.entrega}
+                        onSave={(value) => handleUpdateField(order.id, 'entrega', value)}
+                        type="delivery"
+                      />
                     </TableCell>
                     <TableCell>
                       {order.terminado ? (

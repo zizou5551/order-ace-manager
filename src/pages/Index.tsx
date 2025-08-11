@@ -51,6 +51,17 @@ const Index = () => {
     });
   };
 
+  const handleUpdateOrder = (id: string, updates: Partial<Order>) => {
+    setOrders(prev => prev.map(order => 
+      order.id === id ? { ...order, ...updates } : order
+    ));
+    const order = orders.find(o => o.id === id);
+    toast({
+      title: "Pedido actualizado",
+      description: `El pedido "${order?.titulo}" ha sido actualizado.`,
+    });
+  };
+
   const handleDeleteOrder = (id: string) => {
     const order = orders.find(o => o.id === id);
     setOrders(prev => prev.filter(order => order.id !== id));
@@ -157,6 +168,7 @@ const Index = () => {
             <OrderTable 
               orders={orders} 
               onDeleteOrder={handleDeleteOrder}
+              onUpdateOrder={handleUpdateOrder}
             />
           </CardContent>
         </Card>
