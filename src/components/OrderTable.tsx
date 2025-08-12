@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "./StatusBadge";
 import { EditableCell } from "./EditableCell";
+import { FileUploadDialog } from "./FileUploadDialog";
 import { Order } from "@/types/order";
-import { Search, Eye, Trash2 } from "lucide-react";
+import { Search, Eye, Trash2, Upload } from "lucide-react";
 
 interface OrderTableProps {
   orders: Order[];
@@ -17,6 +18,7 @@ interface OrderTableProps {
 export function OrderTable({ orders, onDeleteOrder, onUpdateOrder }: OrderTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [uploadOrder, setUploadOrder] = useState<Order | null>(null);
 
   const filteredOrders = orders.filter(order =>
     order.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -195,6 +197,13 @@ export function OrderTable({ orders, onDeleteOrder, onUpdateOrder }: OrderTableP
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => setUploadOrder(order)}
+                        >
+                          <Upload className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => onDeleteOrder(order.id)}
                           className="text-destructive hover:text-destructive/80"
                         >
@@ -278,6 +287,15 @@ export function OrderTable({ orders, onDeleteOrder, onUpdateOrder }: OrderTableP
             </div>
           </div>
         </div>
+      )}
+      {uploadOrder && (
+        <FileUploadDialog
+          open={!!uploadOrder}
+          orderTitle={uploadOrder?.titulo ?? ''}
+          onOpenChange={(open) => {
+            if (!open) setUploadOrder(null)
+          }}
+        />
       )}
     </div>
   );
