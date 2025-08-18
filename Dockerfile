@@ -1,23 +1,34 @@
-# --- Build (compila Vite) ---
+# Etapa de build
 FROM node:20-alpine AS builder
+
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci || npm install
-COPY . .
+
+# Clona el código directamente (con acceso público o deploy key)
+RUN apk add --no-cache git openssh
+
+# Clona desde GitHub con SSH
+RUN git clone --depth=1 --branch=main git@github.com:zizou5551/order-ace-manager.git .
+
+# Instala dependencias y compila
+RUN npm install
 RUN npm run build
 
-# --- Serve (sirve estático con Nginx) ---
+# Etapa final: nginx
 FROM nginx:alpine
-# Copia el build a la carpeta pública de Nginx
+
 COPY --from=builder /app/dist /usr/share/nginx/html
-# SPA fallback: todas las rutas van a index.html
-RUN printf 'server {\n\
-  listen 80;\n\
-  server_name _;\n\
-  root /usr/share/nginx/html;\n\
-  index index.html;\n\
-  location / {\n\
-    try_files $uri /index.html;\n\
-  }\n\
+
+# SPA fallback
+RUN rm /etc/nginx/conf.d/default.conf && \
+    printf 'server {\n\
+    listen 80;\n\
+    server_name _;\n\
+    root /usr/share/nginx/html;\n\
+    index index.html;\n\
+    location / {\n\
+      try_files $uri /index.html;\n\
+    }\n\
 }\n' > /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
