@@ -2,27 +2,19 @@
 FROM node:20-alpine AS builder
 
 WORKDIR /app
-
-# Instalamos Git por si tu código se clona desde GitHub
-RUN apk add --no-cache git
-
-# Copiamos y preparamos dependencias
-COPY package.json package-lock.json* ./
-RUN npm install
-
-# Copiamos el resto del código
 COPY . .
 
-# Compilamos el frontend (esto genera la carpeta /app/dist)
+# Instalación de dependencias y build
+RUN npm install
 RUN npm run build
 
-# Etapa final: nginx
+# Etapa final: nginx para servir el frontend
 FROM nginx:alpine
 
-# Copiamos el contenido compilado al directorio que nginx sirve
+# Copia el contenido compilado al directorio de nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Reemplazamos la configuración de nginx con una para SPA (Single Page Application)
+# Configuración personalizada de nginx para SPA
 RUN rm /etc/nginx/conf.d/default.conf && \
     printf 'server {\n\
     listen 80;\n\
@@ -35,6 +27,4 @@ RUN rm /etc/nginx/conf.d/default.conf && \
 }\n' > /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
-
-# Inicia nginx
 CMD ["nginx", "-g", "daemon off;"]
