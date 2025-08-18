@@ -3,23 +3,28 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Instala git y openssh para clonar o manejar dependencias (si hace falta)
-RUN apk add --no-cache git openssh
+# Instala Git (para clonar si lo necesitas)
+RUN apk add --no-cache git
 
-# Copia el código fuente al contenedor (incluye package.json)
+# Copia el package.json y el lock (si tenés)
+COPY package.json package-lock.json* ./
+
+# Instala TODAS las dependencias, incluidas dev (necesario para Vite)
+RUN npm install --include=dev
+
+# Copia el resto del código
 COPY . .
 
-# Instala dependencias y compila el proyecto
-RUN npm install --include=dev
+# Compila la app
 RUN npm run build
 
-# Etapa final: usa nginx para servir la app
+# Etapa final: nginx
 FROM nginx:alpine
 
-# Copia los archivos ya compilados al directorio web de nginx
+# Copia el resultado del build al contenedor de nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Configura nginx para SPA (Single Page Application)
+# Configura nginx para SPA (Single Page App con fallback a index.html)
 RUN rm /etc/nginx/conf.d/default.conf && \
     printf 'server {\n\
     listen 80;\n\
@@ -33,4 +38,5 @@ RUN rm /etc/nginx/conf.d/default.conf && \
 
 EXPOSE 80
 
+# Arranca nginx
 CMD ["nginx", "-g", "daemon off;"]
