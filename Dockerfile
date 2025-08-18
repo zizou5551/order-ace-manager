@@ -6,8 +6,6 @@ WORKDIR /app
 # Clona el código directamente (con acceso público o deploy key)
 RUN apk add --no-cache git openssh
 
-# Clona desde GitHub con SSH
-RUN git clone --depth=1 --branch=main git@github.com:zizou5551/order-ace-manager.git .
 
 # Instala dependencias y compila
 RUN npm install
