@@ -10,7 +10,7 @@ RUN apk add --no-cache git openssh
 COPY . .
 
 # Instala dependencias y compila el proyecto
-RUN npm install
+RUN npm install --include=dev
 RUN npm run build
 
 # Etapa final: usa nginx para servir la app
