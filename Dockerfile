@@ -4,17 +4,15 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY . .
 
-# Instalación de dependencias y build
 RUN npm install
 RUN npm run build
 
-# Etapa final: nginx para servir el frontend
+# Etapa final
 FROM nginx:alpine
 
-# Copia el contenido compilado al directorio de nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Configuración personalizada de nginx para SPA
+# Configuración SPA
 RUN rm /etc/nginx/conf.d/default.conf && \
     printf 'server {\n\
     listen 80;\n\
