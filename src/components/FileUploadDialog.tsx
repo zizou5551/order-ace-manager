@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +17,10 @@ interface FileUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orderTitle: string;
+  autoOpen?: boolean;
 }
 
-export function FileUploadDialog({ open, onOpenChange, orderTitle }: FileUploadDialogProps) {
+export function FileUploadDialog({ open, onOpenChange, orderTitle, autoOpen = false }: FileUploadDialogProps) {
   const [endpointUrl, setEndpointUrl] = useState<string>("");
   const [files, setFiles] = useState<FileList | null>(null);
   const storageKey = "fileUploadEndpoint";
@@ -38,7 +40,7 @@ export function FileUploadDialog({ open, onOpenChange, orderTitle }: FileUploadD
     if (!endpointUrl) {
       toast({
         title: "Configura el servidor",
-        description: "Introduce la URL del endpoint en tu Lightsail",
+        description: "Introduce la URL del endpoint de tu servidor de dominio",
         variant: "destructive",
       });
       return;
@@ -50,6 +52,7 @@ export function FileUploadDialog({ open, onOpenChange, orderTitle }: FileUploadD
 
     const formData = new FormData();
     formData.append("pedido", orderTitle);
+    formData.append("ruta", "D:\\Shared\\TRABAJOS");
     Array.from(files).forEach((file) => formData.append("files[]", file));
 
     try {
@@ -62,48 +65,57 @@ export function FileUploadDialog({ open, onOpenChange, orderTitle }: FileUploadD
         throw new Error(`HTTP ${res.status}`);
       }
 
+      const result = await res.json();
       toast({
-        title: "Subida completada",
-        description: `Se enviaron ${files.length} archivo(s) para el pedido "${orderTitle}"`,
+        title: "Archivos guardados correctamente",
+        description: `Se guardaron ${files.length} archivo(s) en D:\\Shared\\TRABAJOS\\${orderTitle}`,
       });
       setFiles(null);
       onOpenChange(false);
     } catch (err) {
       console.error(err);
       toast({
-        title: "Error al subir",
-        description: "Verifica CORS y el endpoint del servidor",
+        title: "Error al guardar archivos",
+        description: "Verifica que el servidor esté funcionando correctamente",
         variant: "destructive",
       });
     }
+  };
+
+  const handleSkip = () => {
+    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Subir archivos</DialogTitle>
+          <DialogTitle>
+            {autoOpen ? "¿Quieres subir archivos ahora?" : "Subir archivos"}
+          </DialogTitle>
           <DialogDescription>
             Pedido: <span className="font-medium">{orderTitle}</span>
+            <br />
+            {autoOpen && "Se ha creado el pedido. Puedes subir archivos ahora o hacerlo más tarde."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="endpoint">Endpoint de tu servidor (HTTPS)</Label>
+            <Label htmlFor="endpoint">Endpoint del servidor de tu empresa</Label>
             <Input
               id="endpoint"
-              placeholder="https://tu-dominio/api/upload"
+              placeholder="https://tu-dominio-empresa.com/api/upload"
               value={endpointUrl}
               onChange={(e) => handleSaveEndpoint(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              El servicio debe crear la carpeta con el nombre del pedido y guardar los archivos dentro.
+              Los archivos se guardarán automáticamente en: D:\Shared\TRABAJOS\{orderTitle}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="files">Archivos</Label>
+            <Label htmlFor="files">Archivos del pedido</Label>
             <Input
               id="files"
               type="file"
@@ -111,15 +123,20 @@ export function FileUploadDialog({ open, onOpenChange, orderTitle }: FileUploadD
               onChange={(e) => setFiles(e.target.files)}
             />
             <p className="text-xs text-muted-foreground">
-              Se enviarán como multipart/form-data con campos: pedido y files[]
+              Selecciona todos los archivos relacionados con este pedido
             </p>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2">
+            {autoOpen && (
+              <Button type="button" variant="outline" onClick={handleSkip}>
+                Subir más tarde
+              </Button>
+            )}
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">Subir</Button>
+            <Button type="submit">Guardar archivos</Button>
           </DialogFooter>
         </form>
       </DialogContent>

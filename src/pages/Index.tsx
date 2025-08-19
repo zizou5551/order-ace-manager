@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OrderForm } from "@/components/OrderForm";
 import { OrderTable } from "@/components/OrderTable";
+import { FileUploadDialog } from "@/components/FileUploadDialog";
 import { Order, OrderFormData } from "@/types/order";
 import { Plus, Package, TrendingUp, Clock, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -10,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 const Index = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [newOrderForUpload, setNewOrderForUpload] = useState<Order | null>(null);
 
   // Load initial data with sample order
   useEffect(() => {
@@ -49,6 +51,9 @@ const Index = () => {
       title: "Pedido creado",
       description: `El pedido "${orderData.titulo}" ha sido creado exitosamente.`,
     });
+
+    // Automatically open file upload dialog for the new order
+    setNewOrderForUpload(newOrder);
   };
 
   const handleUpdateOrder = (id: string, updates: Partial<Order>) => {
@@ -104,7 +109,6 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -159,7 +163,6 @@ const Index = () => {
           </Card>
         </div>
 
-        {/* Orders Table */}
         <Card>
           <CardHeader>
             <CardTitle>Lista de Pedidos</CardTitle>
@@ -173,12 +176,22 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        {/* Order Form Modal */}
         <OrderForm
           isOpen={isFormOpen}
           onClose={() => setIsFormOpen(false)}
           onSubmit={handleCreateOrder}
         />
+
+        {newOrderForUpload && (
+          <FileUploadDialog
+            open={!!newOrderForUpload}
+            orderTitle={newOrderForUpload.titulo}
+            autoOpen={true}
+            onOpenChange={(open) => {
+              if (!open) setNewOrderForUpload(null);
+            }}
+          />
+        )}
       </div>
     </div>
   );
