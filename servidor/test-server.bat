@@ -1,10 +1,12 @@
 
 @echo off
-chcp 65001 >nul 2>&1
+title Diagnostico del Servidor
+color 07
 echo ====================================
-echo      DIAGNÓSTICO DEL SERVIDOR
+echo      DIAGNOSTICO DEL SERVIDOR
 echo ====================================
 echo.
+echo Iniciando diagnostico...
 
 echo 1. Verificando Node.js...
 node --version
@@ -64,9 +66,14 @@ echo.
 
 :end
 echo ====================================
-echo Diagnóstico completado
+echo Diagnostico completado
 echo ====================================
 echo.
-echo Si todo está OK, ejecuta: start-server.bat
+echo Si todo esta OK, ejecuta: start-server.bat
+echo Si hay errores, revisa los pasos anteriores
 echo.
-pause
+echo Presiona ENTER para continuar...
+pause >nul
+echo.
+echo Cerrando en 5 segundos...
+timeout /t 5 /nobreak >nul
