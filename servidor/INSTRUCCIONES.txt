@@ -1,0 +1,55 @@
+📋 INSTRUCCIONES PARA INSTALAR EL SERVIDOR DE PEDIDOS
+================================================================
+
+🎯 OBJETIVO: Servidor que recibe archivos y crea carpetas automáticamente en D:\Shared\TRABAJOS
+
+📋 PASOS DE INSTALACIÓN:
+
+1️⃣ INSTALAR NODE.JS EN EL SERVIDOR (192.168.5.4)
+   - Descargar de: https://nodejs.org (versión LTS)
+   - Instalar en el servidor
+   - Verificar: abrir CMD y escribir "node --version"
+
+2️⃣ CREAR CARPETA EN EL SERVIDOR
+   - Crear: C:\pedidos-server\
+   - Verificar que existe: D:\Shared\TRABAJOS\
+
+3️⃣ COPIAR ARCHIVOS
+   Copiar TODOS estos archivos a C:\pedidos-server\:
+   ✅ server.js
+   ✅ package.json  
+   ✅ install.bat
+   ✅ start-server.bat
+   ✅ INSTRUCCIONES.txt (este archivo)
+
+4️⃣ INSTALAR DEPENDENCIAS
+   - Ir a C:\pedidos-server\
+   - Ejecutar: install.bat (doble clic)
+   - Esperar que termine
+
+5️⃣ INICIAR SERVIDOR
+   - Ejecutar: start-server.bat (doble clic)
+   - Verás: "Servidor iniciado en puerto 3001"
+   - ⚠️ NO CERRAR LA VENTANA (debe quedarse abierta)
+
+6️⃣ PROBAR FUNCIONAMIENTO
+   - Desde cualquier PC de la red abrir navegador
+   - Ir a: http://192.168.5.4:3001/api/test
+   - Debe mostrar: "Servidor funcionando correctamente"
+
+🎉 ¡LISTO! Tu aplicación ya puede subir archivos automáticamente.
+
+📂 ESTRUCTURA QUE SE CREA:
+D:\Shared\TRABAJOS\
+├── RTVE 2803\
+│   ├── archivo1.pdf
+│   └── imagen.jpg  
+├── Otro Pedido\
+│   └── documento.pdf
+
+🌐 URL DEL ENDPOINT: http://192.168.5.4:3001/api/upload
+
+❓ Si tienes problemas:
+- Verificar que Node.js esté instalado
+- Verificar que la carpeta D:\Shared\TRABAJOS existe
+- Verificar que no hay antivirus bloqueando el puerto 3001
