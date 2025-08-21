@@ -105,7 +105,7 @@ export function FileUploadDialog({ open, onOpenChange, orderTitle, autoOpen = fa
             <Label htmlFor="endpoint">Endpoint del servidor de tu empresa</Label>
             <Input
               id="endpoint"
-              placeholder="https://tu-dominio-empresa.com/api/upload"
+              placeholder="http://192.168.5.4:3001/api/upload"
               value={endpointUrl}
               onChange={(e) => handleSaveEndpoint(e.target.value)}
             />
