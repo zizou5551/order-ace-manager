@@ -7,53 +7,104 @@ import { FileUploadDialog } from "@/components/FileUploadDialog";
 import { Order, OrderFormData } from "@/types/order";
 import { Plus, Package, TrendingUp, Clock, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { listOrders, saveOrder, ApiError } from "@/services/api";
 
 const Index = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [newOrderForUpload, setNewOrderForUpload] = useState<Order | null>(null);
 
-  // Load initial data with sample order
+  // Load orders from backend
   useEffect(() => {
-    const sampleOrder: Order = {
-      id: '1',
-      titulo: 'RTVE 2803',
-      descripcion: '2 COPIAS DE 1 MANUAL TAMAÑO DIN A4 IMPRESOS A 1/1 NEGRO EN PAPEL OFFSET DE 80GR.\nENCUADERNADOS EN ESPIRAL METÁLICA NEGRA, CON ACETATOS TRASLUCIDO DELANTE, NEGRO DETRÁS.\nENCUADERNAR POR ORDEN NUMÉRICO\nENVIO A:\nHELENA FORTEZA GARCÍA\nPROGRAMA: "LOS CONCIERTOS DE LA 2"\nEDIF. TVE DESP. 420\nAVDA. DE LA RADIO TELEVISIÓN, Nº 4\n28223 POZUELO DE ALARCÓN-MADRID-',
-      fechaEntrega: '2024-09-30',
-      persona: 'Helena Forteza García',
-      cantidad: 2,
-      producto: 'OTROS',
-      prueba: 'SIN_ESTADO',
-      laser: 'SIN_ESTADO',
-      trivor: 'SIN_ESTADO',
-      manipulado: 'SIN_ESTADO',
-      laminado: 'SIN_ESTADO',
-      encuadernacion: 'EN_CURSO',
-      carteleria: 'SIN_ESTADO',
-      subcontrataciones: 'SIN_ESTADO',
-      entrega: 'AVISAR',
-      terminado: false,
-      createdAt: new Date().toISOString(),
-    };
-    setOrders([sampleOrder]);
-  }, []);
-
-  const handleCreateOrder = (orderData: OrderFormData) => {
-    const newOrder: Order = {
-      id: Date.now().toString(),
-      ...orderData,
-      terminado: false,
-      createdAt: new Date().toISOString(),
+    const loadOrders = async () => {
+      try {
+        const ordersData = await listOrders();
+        // Convert backend orders to frontend format for compatibility
+        const formattedOrders: Order[] = ordersData.map(apiOrder => ({
+          id: apiOrder.id,
+          titulo: apiOrder.nombre,
+          descripcion: apiOrder.notas || '',
+          fechaEntrega: '',
+          persona: apiOrder.cliente || '',
+          cantidad: 0,
+          producto: 'OTROS' as const,
+          prueba: 'SIN_ESTADO' as const,
+          laser: 'SIN_ESTADO' as const,
+          trivor: 'SIN_ESTADO' as const,
+          manipulado: 'SIN_ESTADO' as const,
+          laminado: 'SIN_ESTADO' as const,
+          encuadernacion: apiOrder.estado === 'nuevo' ? 'SIN_ESTADO' as const : 'EN_CURSO' as const,
+          carteleria: 'SIN_ESTADO' as const,
+          subcontrataciones: 'SIN_ESTADO' as const,
+          entrega: 'AVISAR' as const,
+          terminado: false,
+          createdAt: apiOrder.createdAt || new Date().toISOString(),
+        }));
+        setOrders(formattedOrders);
+      } catch (error) {
+        console.error('Error loading orders:', error);
+        if (error instanceof ApiError) {
+          toast({
+            title: "Error al cargar pedidos",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      }
     };
     
-    setOrders(prev => [newOrder, ...prev]);
-    toast({
-      title: "Pedido creado",
-      description: `El pedido "${orderData.titulo}" ha sido creado exitosamente.`,
-    });
+    loadOrders();
+  }, []);
 
-    // Automatically open file upload dialog for the new order
-    setNewOrderForUpload(newOrder);
+  const handleCreateOrder = async (orderData: OrderFormData) => {
+    try {
+      const apiOrder = await saveOrder({
+        nombre: orderData.titulo,
+        cliente: orderData.persona,
+        estado: 'nuevo',
+        notas: orderData.descripcion,
+      });
+      
+      // Convert API response to frontend format
+      const newOrder: Order = {
+        id: apiOrder.id,
+        titulo: apiOrder.nombre,
+        descripcion: apiOrder.notas || '',
+        fechaEntrega: orderData.fechaEntrega,
+        persona: apiOrder.cliente || '',
+        cantidad: orderData.cantidad,
+        producto: orderData.producto,
+        prueba: orderData.prueba,
+        laser: orderData.laser,
+        trivor: orderData.trivor,
+        manipulado: orderData.manipulado,
+        laminado: orderData.laminado,
+        encuadernacion: orderData.encuadernacion,
+        carteleria: orderData.carteleria,
+        subcontrataciones: orderData.subcontrataciones,
+        entrega: orderData.entrega,
+        terminado: false,
+        createdAt: apiOrder.createdAt || new Date().toISOString(),
+      };
+      
+      setOrders(prev => [newOrder, ...prev]);
+      toast({
+        title: "Pedido creado",
+        description: `El pedido "${orderData.titulo}" ha sido creado exitosamente.`,
+      });
+
+      // Automatically open file upload dialog for the new order
+      setNewOrderForUpload(newOrder);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      if (error instanceof ApiError) {
+        toast({
+          title: "Error al crear pedido",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const handleUpdateOrder = (id: string, updates: Partial<Order>) => {

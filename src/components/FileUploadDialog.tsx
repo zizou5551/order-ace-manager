@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
+import { uploadFiles, ApiError } from "@/services/api";
 
 interface FileUploadDialogProps {
   open: boolean;
@@ -37,48 +38,42 @@ export function FileUploadDialog({ open, onOpenChange, orderTitle, autoOpen = fa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!endpointUrl) {
-      toast({
-        title: "Configura el servidor",
-        description: "Introduce la URL del endpoint de tu servidor de dominio",
-        variant: "destructive",
-      });
-      return;
-    }
     if (!files || files.length === 0) {
       toast({ title: "Sin archivos", description: "Selecciona archivos para subir" });
       return;
     }
 
-    const formData = new FormData();
-    formData.append("pedido", orderTitle);
-    formData.append("ruta", "D:\\Shared\\TRABAJOS");
-    Array.from(files).forEach((file) => formData.append("files[]", file));
-
     try {
-      const res = await fetch(endpointUrl, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      const result = await res.json();
+      const result = await uploadFiles(orderTitle, files);
       toast({
         title: "Archivos guardados correctamente",
-        description: `Se guardaron ${files.length} archivo(s) en D:\\Shared\\TRABAJOS\\${orderTitle}`,
+        description: `Se guardaron ${files.length} archivo(s)`,
       });
       setFiles(null);
       onOpenChange(false);
-    } catch (err) {
-      console.error(err);
-      toast({
-        title: "Error al guardar archivos",
-        description: "Verifica que el servidor esté funcionando correctamente",
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error(error);
+      if (error instanceof ApiError) {
+        if (error.status === 413) {
+          toast({
+            title: "Archivo demasiado grande",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error al guardar archivos",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Error al guardar archivos",
+          description: "Verifica que el servidor esté funcionando correctamente",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -101,19 +96,6 @@ export function FileUploadDialog({ open, onOpenChange, orderTitle, autoOpen = fa
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="endpoint">Endpoint del servidor de tu empresa</Label>
-            <Input
-              id="endpoint"
-              placeholder="http://192.168.5.4:3001/api/upload"
-              value={endpointUrl}
-              onChange={(e) => handleSaveEndpoint(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Los archivos se guardarán automáticamente en: D:\Shared\TRABAJOS\{orderTitle}
-            </p>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="files">Archivos del pedido</Label>
             <Input
