@@ -1,23 +1,29 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Check, X, Edit } from "lucide-react";
-import { ProductType, ProofStatus, ProcessStatus, DeliveryType } from "@/types/order";
+import { Badge } from "@/components/ui/badge";
+import { Edit, Check, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface EditableCellProps {
-  value: string | number;
-  onSave: (value: any) => void;
-  type?: 'text' | 'number' | 'date' | 'product' | 'proof' | 'process' | 'delivery';
+  value: string;
+  onSave: (value: string) => void;
+  type?: 'text' | 'textarea' | 'estado';
   className?: string;
 }
 
-const productOptions: ProductType[] = ['SIN_SELECCION', 'LIBROS', 'REVISTAS', 'DIPTICOS / TRIPTICOS', 'TARJETAS / TARJETONES / FLYERS', 'WIRE-O', 'CARPETAS ANILLAS', 'CARTELES', 'OTROS'];
-const proofOptions: ProofStatus[] = ['SIN_ESTADO', 'ESPERANDO', 'OK CLIENTE', 'ENVIADA PRUEBA', 'PARADO', 'FERRO DIGITAL'];
-const processOptions: ProcessStatus[] = ['SIN_ESTADO', 'ESPERANDO', 'EN_CURSO'];
-const deliveryOptions: DeliveryType[] = ['SIN_SELECCION', 'RECOGE EN FRAGMA', '2814', 'AVISAR', 'ENTREGA IMEDISA', 'ENTREGA JUANILLO', 'JUANILLO', 'STOCK FRAGMA'];
+const estadoOptions = [
+  { value: 'nuevo', label: 'Nuevo' },
+  { value: 'en_proceso', label: 'En Proceso' },
+  { value: 'revision', label: 'Revisión' },
+  { value: 'completado', label: 'Completado' },
+  { value: 'entregado', label: 'Entregado' },
+  { value: 'cancelado', label: 'Cancelado' }
+];
 
-export function EditableCell({ value, onSave, type = 'text', className }: EditableCellProps) {
+export const EditableCell = ({ value, onSave, type = 'text', className }: EditableCellProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
 
@@ -31,98 +37,68 @@ export function EditableCell({ value, onSave, type = 'text', className }: Editab
     setIsEditing(false);
   };
 
+  const getEstadoBadgeVariant = (estado: string) => {
+    switch (estado?.toLowerCase()) {
+      case 'completado':
+      case 'entregado':
+        return 'default';
+      case 'en_proceso':
+      case 'revision':
+        return 'secondary';
+      case 'cancelado':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
+
   const renderInput = () => {
     switch (type) {
-      case 'product':
+      case 'textarea':
         return (
-          <Select value={editValue as string} onValueChange={setEditValue}>
-            <SelectTrigger className="h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {productOptions.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option === 'SIN_SELECCION' ? 'Sin selección' : option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
-      case 'proof':
-        return (
-          <Select value={editValue as string} onValueChange={setEditValue}>
-            <SelectTrigger className="h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {proofOptions.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option === 'SIN_ESTADO' ? 'Sin estado' :
-                   option === 'OK CLIENTE' ? 'OK Cliente' :
-                   option === 'ENVIADA PRUEBA' ? 'Enviada Prueba' :
-                   option === 'FERRO DIGITAL' ? 'Ferro Digital' : option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
-      case 'process':
-        return (
-          <Select value={editValue as string} onValueChange={setEditValue}>
-            <SelectTrigger className="h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {processOptions.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option === 'SIN_ESTADO' ? 'Sin estado' :
-                   option === 'EN_CURSO' ? 'En Curso' : option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
-      case 'delivery':
-        return (
-          <Select value={editValue as string} onValueChange={setEditValue}>
-            <SelectTrigger className="h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {deliveryOptions.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option === 'SIN_SELECCION' ? 'Sin selección' : option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
-      case 'number':
-        return (
-          <Input
-            type="number"
+          <Textarea
             value={editValue}
-            onChange={(e) => setEditValue(e.target.value === '' ? 0 : parseInt(e.target.value))}
-            className="h-8"
-            autoFocus
-          />
-        );
-      case 'date':
-        return (
-          <Input
-            type="date"
-            value={editValue as string}
             onChange={(e) => setEditValue(e.target.value)}
-            className="h-8"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.ctrlKey) {
+                handleSave();
+              } else if (e.key === 'Escape') {
+                handleCancel();
+              }
+            }}
+            className="min-h-[60px]"
             autoFocus
           />
         );
+      
+      case 'estado':
+        return (
+          <Select value={editValue} onValueChange={setEditValue}>
+            <SelectTrigger className="w-fit min-w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {estadoOptions.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      
       default:
         return (
           <Input
-            value={editValue as string}
+            value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
-            className="h-8"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSave();
+              } else if (e.key === 'Escape') {
+                handleCancel();
+              }
+            }}
             autoFocus
           />
         );
@@ -131,30 +107,51 @@ export function EditableCell({ value, onSave, type = 'text', className }: Editab
 
   if (isEditing) {
     return (
-      <div className="flex items-center gap-1 min-w-[200px]">
-        <div className="flex-1">
-          {renderInput()}
+      <div className="space-y-2">
+        {renderInput()}
+        <div className="flex gap-1">
+          <Button size="sm" onClick={handleSave} className="h-6 px-2">
+            <Check className="h-3 w-3" />
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleCancel} className="h-6 px-2">
+            <X className="h-3 w-3" />
+          </Button>
         </div>
-        <Button size="sm" variant="ghost" onClick={handleSave} className="h-8 w-8 p-0">
-          <Check className="h-4 w-4 text-green-600" />
-        </Button>
-        <Button size="sm" variant="ghost" onClick={handleCancel} className="h-8 w-8 p-0">
-          <X className="h-4 w-4 text-red-600" />
-        </Button>
       </div>
     );
   }
 
+  const displayValue = () => {
+    if (type === 'estado') {
+      const estadoOption = estadoOptions.find(opt => opt.value === value);
+      return (
+        <Badge variant={getEstadoBadgeVariant(value)}>
+          {estadoOption?.label || value || 'Nuevo'}
+        </Badge>
+      );
+    }
+    
+    if (type === 'textarea') {
+      return (
+        <div className="max-w-xs truncate" title={value}>
+          {value || 'Sin notas'}
+        </div>
+      );
+    }
+    
+    return value || 'Sin valor';
+  };
+
   return (
-    <div className={`flex items-center justify-between group cursor-pointer ${className}`} onClick={() => setIsEditing(true)}>
-      <span className="flex-1 min-h-[32px] flex items-center">
-        {type === 'product' && value === 'SIN_SELECCION' ? 'Sin selección' :
-         type === 'delivery' && value === 'SIN_SELECCION' ? 'Sin selección' :
-         type === 'proof' && value === 'SIN_ESTADO' ? 'Sin estado' :
-         type === 'process' && value === 'SIN_ESTADO' ? 'Sin estado' :
-         value || '-'}
-      </span>
-      <Edit className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity ml-2" />
+    <div
+      className={cn(
+        "group relative cursor-pointer rounded px-1 py-0.5 hover:bg-muted/50 transition-colors",
+        className
+      )}
+      onClick={() => setIsEditing(true)}
+    >
+      {displayValue()}
+      <Edit className="absolute right-1 top-1 h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
     </div>
   );
-}
+};
