@@ -5,90 +5,66 @@ import { OrderForm } from "@/components/OrderForm";
 import { OrderTable } from "@/components/OrderTable";
 import { FileUploadDialog } from "@/components/FileUploadDialog";
 import { Order, OrderFormData } from "@/types/order";
-import { api } from "@/services/api";
-import { Plus, Package, TrendingUp, Clock, CheckCircle, Loader2 } from "lucide-react";
+import { Plus, Package, TrendingUp, Clock, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [newOrderForUpload, setNewOrderForUpload] = useState<Order | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Load orders from backend
+  // Load initial data with sample order
   useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        setIsLoading(true);
-        const ordersData = await api.getOrders();
-        setOrders(ordersData);
-      } catch (error) {
-        console.error('Error loading orders:', error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar los pedidos. Verifique la conexión con el servidor.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
+    const sampleOrder: Order = {
+      id: '1',
+      titulo: 'RTVE 2803',
+      descripcion: '2 COPIAS DE 1 MANUAL TAMAÑO DIN A4 IMPRESOS A 1/1 NEGRO EN PAPEL OFFSET DE 80GR.\nENCUADERNADOS EN ESPIRAL METÁLICA NEGRA, CON ACETATOS TRASLUCIDO DELANTE, NEGRO DETRÁS.\nENCUADERNAR POR ORDEN NUMÉRICO\nENVIO A:\nHELENA FORTEZA GARCÍA\nPROGRAMA: "LOS CONCIERTOS DE LA 2"\nEDIF. TVE DESP. 420\nAVDA. DE LA RADIO TELEVISIÓN, Nº 4\n28223 POZUELO DE ALARCÓN-MADRID-',
+      fechaEntrega: '2024-09-30',
+      persona: 'Helena Forteza García',
+      cantidad: 2,
+      producto: 'OTROS',
+      prueba: 'SIN_ESTADO',
+      laser: 'SIN_ESTADO',
+      trivor: 'SIN_ESTADO',
+      manipulado: 'SIN_ESTADO',
+      laminado: 'SIN_ESTADO',
+      encuadernacion: 'EN_CURSO',
+      carteleria: 'SIN_ESTADO',
+      subcontrataciones: 'SIN_ESTADO',
+      entrega: 'AVISAR',
+      terminado: false,
+      createdAt: new Date().toISOString(),
     };
-
-    loadOrders();
+    setOrders([sampleOrder]);
   }, []);
 
-  const handleCreateOrder = async (orderData: OrderFormData) => {
-    try {
-      const newOrder = await api.saveOrder({
-        ...orderData,
-        estado: orderData.estado || 'nuevo'
-      });
-      
-      setOrders(prev => [newOrder, ...prev]);
-      toast({
-        title: "Pedido creado",
-        description: `El pedido "${orderData.nombre}" ha sido creado exitosamente.`,
-      });
+  const handleCreateOrder = (orderData: OrderFormData) => {
+    const newOrder: Order = {
+      id: Date.now().toString(),
+      ...orderData,
+      terminado: false,
+      createdAt: new Date().toISOString(),
+    };
+    
+    setOrders(prev => [newOrder, ...prev]);
+    toast({
+      title: "Pedido creado",
+      description: `El pedido "${orderData.titulo}" ha sido creado exitosamente.`,
+    });
 
-      // Automatically open file upload dialog for the new order
-      setNewOrderForUpload(newOrder);
-    } catch (error) {
-      console.error('Error creating order:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo crear el pedido. Intente nuevamente.",
-        variant: "destructive",
-      });
-    }
+    // Automatically open file upload dialog for the new order
+    setNewOrderForUpload(newOrder);
   };
 
-  const handleUpdateOrder = async (id: string, updates: Partial<Order>) => {
-    try {
-      const orderToUpdate = orders.find(o => o.id === id);
-      if (!orderToUpdate) return;
-
-      const updatedOrder = await api.saveOrder({
-        ...orderToUpdate,
-        ...updates,
-        id
-      });
-
-      setOrders(prev => prev.map(order => 
-        order.id === id ? updatedOrder : order
-      ));
-      
-      toast({
-        title: "Pedido actualizado",
-        description: `El pedido "${updatedOrder.nombre}" ha sido actualizado.`,
-      });
-    } catch (error) {
-      console.error('Error updating order:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el pedido. Intente nuevamente.",
-        variant: "destructive",
-      });
-    }
+  const handleUpdateOrder = (id: string, updates: Partial<Order>) => {
+    setOrders(prev => prev.map(order => 
+      order.id === id ? { ...order, ...updates } : order
+    ));
+    const order = orders.find(o => o.id === id);
+    toast({
+      title: "Pedido actualizado",
+      description: `El pedido "${order?.titulo}" ha sido actualizado.`,
+    });
   };
 
   const handleDeleteOrder = (id: string) => {
@@ -96,16 +72,19 @@ const Index = () => {
     setOrders(prev => prev.filter(order => order.id !== id));
     toast({
       title: "Pedido eliminado",
-      description: `El pedido "${order?.nombre}" ha sido eliminado.`,
+      description: `El pedido "${order?.titulo}" ha sido eliminado.`,
       variant: "destructive",
     });
   };
 
   const getStats = () => {
     const total = orders.length;
-    const completed = orders.filter(o => o.estado === 'completado' || o.estado === 'entregado').length;
-    const inProgress = orders.filter(o => o.estado && o.estado !== 'nuevo' && o.estado !== 'completado' && o.estado !== 'entregado').length;
-    const pending = orders.filter(o => !o.estado || o.estado === 'nuevo').length;
+    const completed = orders.filter(o => o.terminado).length;
+    const inProgress = orders.filter(o => !o.terminado).length;
+    const pending = orders.filter(o => {
+      const hasAnyStatus = [o.prueba, o.laser, o.trivor, o.manipulado, o.laminado, o.encuadernacion, o.carteleria, o.subcontrataciones].some(status => status !== 'SIN_ESTADO');
+      return !hasAnyStatus;
+    }).length;
 
     return { total, completed, inProgress, pending };
   };
@@ -114,7 +93,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="w-full max-w-none py-4 px-4 md:px-6">
+      <div className="container mx-auto py-8 px-4">
         <div className="sticky top-0 z-50 mb-8 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-4">
             <div>
@@ -184,23 +163,16 @@ const Index = () => {
           </Card>
         </div>
 
-        <Card className="w-full">
+        <Card>
           <CardHeader>
             <CardTitle>Lista de Pedidos</CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                <span>Cargando pedidos...</span>
-              </div>
-            ) : (
-              <OrderTable 
-                orders={orders} 
-                onDeleteOrder={handleDeleteOrder}
-                onUpdateOrder={handleUpdateOrder}
-              />
-            )}
+          <CardContent>
+            <OrderTable 
+              orders={orders} 
+              onDeleteOrder={handleDeleteOrder}
+              onUpdateOrder={handleUpdateOrder}
+            />
           </CardContent>
         </Card>
 
@@ -213,7 +185,7 @@ const Index = () => {
         {newOrderForUpload && (
           <FileUploadDialog
             open={!!newOrderForUpload}
-            orderTitle={newOrderForUpload.nombre}
+            orderTitle={newOrderForUpload.titulo}
             autoOpen={true}
             onOpenChange={(open) => {
               if (!open) setNewOrderForUpload(null);

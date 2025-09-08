@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,58 +21,69 @@ interface FileUploadDialogProps {
 }
 
 export function FileUploadDialog({ open, onOpenChange, orderTitle, autoOpen = false }: FileUploadDialogProps) {
+  const [endpointUrl, setEndpointUrl] = useState<string>("");
   const [files, setFiles] = useState<FileList | null>(null);
+  const storageKey = "fileUploadEndpoint";
+
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) setEndpointUrl(saved);
+  }, []);
+
+  const handleSaveEndpoint = (value: string) => {
+    setEndpointUrl(value);
+    localStorage.setItem(storageKey, value);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!files || files.length === 0) {
+    if (!endpointUrl) {
       toast({
-        title: "Error",
-        description: "Por favor selecciona al menos un archivo",
+        title: "Configura el servidor",
+        description: "Introduce la URL del endpoint de tu servidor de dominio",
         variant: "destructive",
       });
       return;
     }
+    if (!files || files.length === 0) {
+      toast({ title: "Sin archivos", description: "Selecciona archivos para subir" });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("pedido", orderTitle);
+    formData.append("ruta", "D:\\Shared\\TRABAJOS");
+    Array.from(files).forEach((file) => formData.append("files[]", file));
 
     try {
-      const formData = new FormData();
-      formData.append('pedido', orderTitle);
-      
-      Array.from(files).forEach(file => {
-        formData.append('files[]', file);
-      });
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
+      const res = await fetch(endpointUrl, {
+        method: "POST",
         body: formData,
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 413) {
-          throw new Error(result.error || 'Archivo demasiado grande');
-        }
-        throw new Error(result.error || `Error ${response.status}: ${response.statusText}`);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
 
+      const result = await res.json();
       toast({
-        title: "Archivos subidos exitosamente",
-        description: `Se subieron ${files.length} archivo(s) para el pedido: ${orderTitle}${result.folder ? ` en la carpeta: ${result.folder}` : ''}`,
+        title: "Archivos guardados correctamente",
+        description: `Se guardaron ${files.length} archivo(s) en D:\\Shared\\TRABAJOS\\${orderTitle}`,
       });
-      
       setFiles(null);
       onOpenChange(false);
-      
-    } catch (error) {
-      console.error('Error uploading files:', error);
+    } catch (err) {
+      console.error(err);
       toast({
-        title: "Error al subir archivos",
-        description: error instanceof Error ? error.message : "Error desconocido",
+        title: "Error al guardar archivos",
+        description: "Verifica que el servidor esté funcionando correctamente",
         variant: "destructive",
       });
     }
+  };
+
+  const handleSkip = () => {
+    onOpenChange(false);
   };
 
   return (
@@ -90,6 +102,19 @@ export function FileUploadDialog({ open, onOpenChange, orderTitle, autoOpen = fa
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="endpoint">Endpoint del servidor de tu empresa</Label>
+            <Input
+              id="endpoint"
+              placeholder="http://192.168.5.4:3001/api/upload"
+              value={endpointUrl}
+              onChange={(e) => handleSaveEndpoint(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Los archivos se guardarán automáticamente en: D:\Shared\TRABAJOS\{orderTitle}
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="files">Archivos del pedido</Label>
             <Input
               id="files"
@@ -104,7 +129,7 @@ export function FileUploadDialog({ open, onOpenChange, orderTitle, autoOpen = fa
 
           <DialogFooter className="gap-2">
             {autoOpen && (
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={handleSkip}>
                 Subir más tarde
               </Button>
             )}
