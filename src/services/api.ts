@@ -1,9 +1,10 @@
-export interface Order {
+export interface ApiOrder {
   id: string;
   nombre: string;
   cliente?: string;
   estado?: string;
   notas?: string;
+  seccion?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -26,15 +27,19 @@ export class ApiError extends Error {
   }
 }
 
-export const listOrders = async (): Promise<Order[]> => {
+export const listOrders = async (params?: { seccion?: string; q?: string }): Promise<ApiOrder[]> => {
   try {
-    const response = await fetch('/api/orders');
+    const url = new URL('/api/orders', window.location.origin);
+    if (params?.seccion) url.searchParams.set('seccion', params.seccion);
+    if (params?.q) url.searchParams.set('q', params.q);
+    
+    const response = await fetch(url.toString());
     
     if (!response.ok) {
       throw new ApiError(`Error ${response.status}`, response.status);
     }
     
-    const data: ApiResponse<Order> = await response.json();
+    const data: ApiResponse<ApiOrder> = await response.json();
     
     if (!data.ok) {
       throw new ApiError(data.message || 'Error al obtener pedidos');
@@ -49,13 +54,7 @@ export const listOrders = async (): Promise<Order[]> => {
   }
 };
 
-export const saveOrder = async (input: {
-  id?: string;
-  nombre: string;
-  cliente?: string;
-  estado?: string;
-  notas?: string;
-}): Promise<Order> => {
+export const saveOrder = async (input: { id?: string; nombre: string; cliente?: string; estado?: string; notas?: string; seccion?: string }): Promise<ApiOrder> => {
   try {
     const response = await fetch('/api/order', {
       method: 'POST',
@@ -69,7 +68,7 @@ export const saveOrder = async (input: {
       throw new ApiError(`Error ${response.status}`, response.status);
     }
     
-    const data: ApiResponse<Order> = await response.json();
+    const data: ApiResponse<ApiOrder> = await response.json();
     
     if (!data.ok || !data.order) {
       throw new ApiError(data.message || 'Error al guardar pedido');
@@ -84,11 +83,34 @@ export const saveOrder = async (input: {
   }
 };
 
-export const uploadFiles = async (pedido: string, files: FileList): Promise<any> => {
+export const deleteOrder = async (id: string): Promise<void> => {
+  try {
+    const response = await fetch(`/api/orders/${id}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      throw new ApiError(`Error ${response.status}`, response.status);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.ok) {
+      throw new ApiError(data.message || 'Error al eliminar pedido');
+    }
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError('Error de conexión al servidor');
+  }
+};
+
+export const uploadFiles = async (pedido: string, files: File[]): Promise<{ success: boolean; path: string; files: { filename: string; size: number }[] }> => {
   try {
     const formData = new FormData();
     formData.append('pedido', pedido);
-    Array.from(files).forEach((file) => formData.append('files[]', file));
+    files.forEach((file) => formData.append('files[]', file));
     
     const response = await fetch('/api/upload', {
       method: 'POST',

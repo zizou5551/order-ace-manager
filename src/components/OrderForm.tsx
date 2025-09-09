@@ -39,6 +39,7 @@ export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
     carteleria: 'SIN_ESTADO',
     subcontrataciones: 'SIN_ESTADO',
     entrega: 'SIN_SELECCION',
+    seccion: 'carteleria',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -60,6 +61,7 @@ export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
       carteleria: 'SIN_ESTADO',
       subcontrataciones: 'SIN_ESTADO',
       entrega: 'SIN_SELECCION',
+      seccion: 'carteleria',
     });
     onClose();
   };
@@ -130,6 +132,27 @@ export function OrderForm({ onSubmit, isOpen, onClose }: OrderFormProps) {
                 />
               </div>
               
+              <div className="space-y-2">
+                <Label htmlFor="seccion">Sección *</Label>
+                <Select
+                  value={formData.seccion}
+                  onValueChange={(value) => setFormData({...formData, seccion: value as OrderFormData["seccion"]})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar sección" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="carteleria">Cartelería</SelectItem>
+                    <SelectItem value="trivor">Trivor</SelectItem>
+                    <SelectItem value="manipulados">Manipulados</SelectItem>
+                    <SelectItem value="logistica">Logística</SelectItem>
+                    <SelectItem value="impresion digital">Impresión Digital</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="producto">Producto</Label>
                 <Select

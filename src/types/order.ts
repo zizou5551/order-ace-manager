@@ -1,5 +1,13 @@
 export interface Order {
   id: string;
+  nombre: string;
+  cliente?: string;
+  estado?: string;
+  notas?: string;
+  seccion: "carteleria" | "trivor" | "manipulados" | "logistica" | "impresion digital";
+  createdAt: string;
+  updatedAt: string;
+  // Legacy fields for compatibility with existing UI
   titulo: string;
   descripcion: string;
   fechaEntrega: string;
@@ -16,7 +24,6 @@ export interface Order {
   subcontrataciones: ProcessStatus;
   entrega: DeliveryType;
   terminado: boolean;
-  createdAt: string;
 }
 
 export type OrderStatus = 'HECHO' | 'EN_CURSO' | 'ESPERANDO' | 'PENDIENTE' | 'SIN_ESTADO';
@@ -45,4 +52,5 @@ export interface OrderFormData {
   carteleria: ProcessStatus;
   subcontrataciones: ProcessStatus;
   entrega: DeliveryType;
+  seccion: Order["seccion"];
 }

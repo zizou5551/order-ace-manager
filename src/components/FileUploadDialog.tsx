@@ -44,7 +44,7 @@ export function FileUploadDialog({ open, onOpenChange, orderTitle, autoOpen = fa
     }
 
     try {
-      const result = await uploadFiles(orderTitle, files);
+      const result = await uploadFiles(orderTitle, Array.from(files));
       toast({
         title: "Archivos guardados correctamente",
         description: `Se guardaron ${files.length} archivo(s)`,

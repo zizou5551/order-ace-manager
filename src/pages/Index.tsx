@@ -5,23 +5,35 @@ import { OrderForm } from "@/components/OrderForm";
 import { OrderTable } from "@/components/OrderTable";
 import { FileUploadDialog } from "@/components/FileUploadDialog";
 import { Order, OrderFormData } from "@/types/order";
-import { Plus, Package, TrendingUp, Clock, CheckCircle } from "lucide-react";
+import { Plus, Package, TrendingUp, Clock, CheckCircle, Search } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { listOrders, saveOrder, ApiError } from "@/services/api";
+import { listOrders, saveOrder, deleteOrder, ApiError, ApiOrder } from "@/services/api";
 
 const Index = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [newOrderForUpload, setNewOrderForUpload] = useState<Order | null>(null);
+  const [currentSection, setCurrentSection] = useState<Order["seccion"]>("carteleria");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Load orders from backend
   useEffect(() => {
     const loadOrders = async () => {
       try {
-        const ordersData = await listOrders();
+        const ordersData = await listOrders({ seccion: currentSection, q: searchQuery });
         // Convert backend orders to frontend format for compatibility
         const formattedOrders: Order[] = ordersData.map(apiOrder => ({
           id: apiOrder.id,
+          nombre: apiOrder.nombre,
+          cliente: apiOrder.cliente,
+          estado: apiOrder.estado,
+          notas: apiOrder.notas,
+          seccion: (apiOrder.seccion as Order["seccion"]) || 'carteleria',
+          createdAt: apiOrder.createdAt || new Date().toISOString(),
+          updatedAt: apiOrder.updatedAt || new Date().toISOString(),
+          // Legacy fields for compatibility with existing UI
           titulo: apiOrder.nombre,
           descripcion: apiOrder.notas || '',
           fechaEntrega: '',
@@ -38,7 +50,6 @@ const Index = () => {
           subcontrataciones: 'SIN_ESTADO' as const,
           entrega: 'AVISAR' as const,
           terminado: false,
-          createdAt: apiOrder.createdAt || new Date().toISOString(),
         }));
         setOrders(formattedOrders);
       } catch (error) {
@@ -54,7 +65,7 @@ const Index = () => {
     };
     
     loadOrders();
-  }, []);
+  }, [currentSection, searchQuery]);
 
   const handleCreateOrder = async (orderData: OrderFormData) => {
     try {
@@ -63,11 +74,20 @@ const Index = () => {
         cliente: orderData.persona,
         estado: 'nuevo',
         notas: orderData.descripcion,
+        seccion: orderData.seccion,
       });
       
       // Convert API response to frontend format
       const newOrder: Order = {
         id: apiOrder.id,
+        nombre: apiOrder.nombre,
+        cliente: apiOrder.cliente,
+        estado: apiOrder.estado,
+        notas: apiOrder.notas,
+        seccion: apiOrder.seccion as Order["seccion"] || 'carteleria',
+        createdAt: apiOrder.createdAt || new Date().toISOString(),
+        updatedAt: apiOrder.updatedAt || new Date().toISOString(),
+        // Legacy fields for compatibility with existing UI
         titulo: apiOrder.nombre,
         descripcion: apiOrder.notas || '',
         fechaEntrega: orderData.fechaEntrega,
@@ -84,7 +104,6 @@ const Index = () => {
         subcontrataciones: orderData.subcontrataciones,
         entrega: orderData.entrega,
         terminado: false,
-        createdAt: apiOrder.createdAt || new Date().toISOString(),
       };
       
       setOrders(prev => [newOrder, ...prev]);
@@ -118,14 +137,31 @@ const Index = () => {
     });
   };
 
-  const handleDeleteOrder = (id: string) => {
+  const handleDeleteOrder = async (id: string) => {
     const order = orders.find(o => o.id === id);
-    setOrders(prev => prev.filter(order => order.id !== id));
-    toast({
-      title: "Pedido eliminado",
-      description: `El pedido "${order?.titulo}" ha sido eliminado.`,
-      variant: "destructive",
-    });
+    if (!order) return;
+    
+    const confirmed = window.confirm(`¿Estás seguro de que quieres eliminar el pedido "${order.titulo}"?`);
+    if (!confirmed) return;
+    
+    try {
+      await deleteOrder(id);
+      setOrders(prev => prev.filter(order => order.id !== id));
+      toast({
+        title: "Pedido eliminado",
+        description: `El pedido "${order.titulo}" ha sido eliminado.`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      if (error instanceof ApiError) {
+        toast({
+          title: "Error al eliminar pedido",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const getStats = () => {
@@ -215,15 +251,40 @@ const Index = () => {
         </div>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
             <CardTitle>Lista de Pedidos</CardTitle>
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar pedidos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 w-[250px]"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <OrderTable 
-              orders={orders} 
-              onDeleteOrder={handleDeleteOrder}
-              onUpdateOrder={handleUpdateOrder}
-            />
+            <Tabs value={currentSection} onValueChange={(value) => setCurrentSection(value as Order["seccion"])}>
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="carteleria">Cartelería</TabsTrigger>
+                <TabsTrigger value="trivor">Trivor</TabsTrigger>
+                <TabsTrigger value="manipulados">Manipulados</TabsTrigger>
+                <TabsTrigger value="logistica">Logística</TabsTrigger>
+                <TabsTrigger value="impresion digital">Impresión Digital</TabsTrigger>
+              </TabsList>
+              
+              {(["carteleria", "trivor", "manipulados", "logistica", "impresion digital"] as const).map((section) => (
+                <TabsContent key={section} value={section} className="mt-6">
+                  <OrderTable 
+                    orders={orders.filter(order => order.seccion === section)} 
+                    onDeleteOrder={handleDeleteOrder}
+                    onUpdateOrder={handleUpdateOrder}
+                  />
+                </TabsContent>
+              ))}
+            </Tabs>
           </CardContent>
         </Card>
 
